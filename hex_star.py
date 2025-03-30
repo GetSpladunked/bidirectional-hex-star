@@ -105,7 +105,6 @@ def bi_join_nodes(child_f, child_b):
         current_node.parent = parent_node
     return current_node
 
-#maybe try bi-linked list for optimization
 def expand(problem, node, h):
     s = node.state
     nodes = []
