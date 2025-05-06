@@ -51,28 +51,25 @@ def inf_bidirectional_search(problem, f, h, h2):
     reached_g = {node_g.state: node_g}
     reached_f2 = {node_f.state[0]: node_f.state}
     reached_g2 = {node_g.state[0]: node_g.state}
-    #direction variable dir is to apply different functionality to the Termination and proceed functions
-    dir = ""
-    solution = None
+
+    #Main Search Loop
     while not frontier_f.empty() and not frontier_g.empty():
         #selects whichever direction has a lower f cost and performs proceed function for that direction
         #also checks if a mutual state has been reached, if so, runs termination function
         if frontier_f.queue[0][0] < frontier_g.queue[0][0]:
-            dir = "f"
             node_f = frontier_f.get(False)[2]
             if node_f.state[0] in reached_g2:
-                return Termination(dir, problem, node_f, reached_g, reached_g2, h)
-            inf_bidirectional_proceed(dir, problem, node_f, frontier_f, reached_f, reached_f2, h)
+                return Termination("f", problem, node_f, reached_g, reached_g2)
+            inf_bidirectional_proceed(problem, node_f, frontier_f, reached_f, reached_f2, h)
         else:
-            dir = "b"
             node_g = frontier_g.get(False)[2]
             if node_g.state[0] in reached_f2:
-                return Termination(dir, problem, node_g, reached_f, reached_f2, h2)
-            inf_bidirectional_proceed(dir, problem, node_g, frontier_g, reached_g, reached_g2, h2)
+                return Termination("b", problem, node_g, reached_f, reached_f2)
+            inf_bidirectional_proceed(problem, node_g, frontier_g, reached_g, reached_g2, h2)
     return solution
 
-#runs the bi-join nodes 
-def Termination(dir, problem, node, reached, reached2, h):
+#runs the bi-join nodes differently based on directional literal passed in
+def Termination(dir, problem, node, reached, reached2):
     print("meeting point: ", node.state[0])
     if dir == "f":
         return bi_join_nodes(node, reached[reached2[node.state[0]]])
@@ -80,7 +77,7 @@ def Termination(dir, problem, node, reached, reached2, h):
         return bi_join_nodes(reached[reached2[node.state[0]]], node)
 
 #proceed function, expands the current node places it in frontier & reached or replaces it if the path cost is better than current node in the table
-def inf_bidirectional_proceed(dir, problem, node, frontier, reached, reached2, h):
+def inf_bidirectional_proceed(problem, node, frontier, reached, reached2, h):
     for child in expand(problem, node, h):
         s = child.state
         if s not in reached or child.path_cost < reached[s].path_cost:
@@ -91,7 +88,6 @@ def inf_bidirectional_proceed(dir, problem, node, frontier, reached, reached2, h
 
 #bi-join nodes function takes the current node from the front end search, uses it as the root for the current back end node, then iterates down the back end node to form one cohesive path.
 def bi_join_nodes(child_f, child_b):
-    #print("stuck on bijoin")
     current_node = child_b.parent
     next_node_b = current_node.parent
     parent_node = child_f
@@ -105,6 +101,7 @@ def bi_join_nodes(child_f, child_b):
         current_node.parent = parent_node
     return current_node
 
+#maybe try bi-linked list for optimization
 def expand(problem, node, h):
     s = node.state
     nodes = []
@@ -154,6 +151,11 @@ def check_h_consistency(problem, node, h):
                 print(node.state)
                 print(node.parent.state)
     return heuristic_is_consistent
+
+#h'(n) = (1-alpha)*h(n)
+#alpha = x/y
+#x = map size
+#y = number of obstacles
 
 def f(node, h = time_to_goal):
     return g(node) + a_star_weight * h(node)
